@@ -71,6 +71,27 @@ class PokemonList : Fragment() {
         searchAdapter = SimpleCursorAdapter(requireContext(), android.R.layout.simple_list_item_1, null, from, to, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER)
         searchBar.suggestionsAdapter = searchAdapter
 
+        // OnSuggestionListenerの設定
+        searchBar.setOnSuggestionListener(object : SearchView.OnSuggestionListener {
+            override fun onSuggestionSelect(position: Int): Boolean {
+                return true
+            }
+
+            override fun onSuggestionClick(position: Int): Boolean {
+                val cursor = searchAdapter.cursor
+                cursor.moveToPosition(position)
+                try {
+                    val suggestion = cursor.getString(cursor.getColumnIndexOrThrow("suggestion"))
+                    searchBar.setQuery(suggestion, true)
+                } catch (e: IllegalArgumentException) {
+                    // 列が見つからない場合の処理
+                    Toast.makeText(context, "Error: Column not found", Toast.LENGTH_SHORT).show()
+                }
+                return true
+            }
+        })
+
+
         return itemView
     }
 
