@@ -59,7 +59,14 @@ class PokemonList : Fragment() {
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
-                newText?.let { updateSuggestions(it) }
+                newText?.let {
+                    if (it.isEmpty()) {
+                        // 検索ボックスが空になった場合は全てのポケモンを表示
+                        resetSearch()
+                    } else {
+                        updateSuggestions(it)
+                    }
+                }
                 return true
             }
         })
@@ -112,6 +119,11 @@ class PokemonList : Fragment() {
         }
     }
 
+    private fun resetSearch() {
+        adapter.updateList(Common.pokemonList)
+        searchBar.clearFocus()
+    }
+
     private fun fetchData() {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
@@ -138,7 +150,7 @@ class PokemonList : Fragment() {
             val fragmentTransaction = parentFragmentManager.beginTransaction()
 
             // フラグメントトランザクションの設定
-            //fragmentTransaction.replace(R.id.fragment_container, detailFragment) // 修正箇所
+            fragmentTransaction.replace(R.id.list_pokemon_fragment, detailFragment) // 修正箇所
             fragmentTransaction.addToBackStack(null)
             fragmentTransaction.commit()
         } ?: run {

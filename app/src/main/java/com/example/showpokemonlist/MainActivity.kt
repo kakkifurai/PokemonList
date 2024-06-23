@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity() {
                     val detailFragment = PokemonDetail.newInstance(num)
                     supportFragmentManager.beginTransaction().apply {
                         replace(R.id.list_pokemon_fragment, detailFragment)
-                        addToBackStack("detail")
+                        addToBackStack("top")
                         commit()
                     }
 
@@ -59,13 +59,12 @@ class MainActivity : AppCompatActivity() {
                     setDisplayHomeAsUpEnabled(true)
                     setDisplayShowHomeEnabled(true)
                 }
-
                 val num = intent.getStringExtra("num")
                 if (num != null) {
                     val detailFragment = PokemonDetail.newInstance(num)
                     supportFragmentManager.beginTransaction().apply {
                         replace(R.id.list_pokemon_fragment, detailFragment)
-                        addToBackStack("detail")
+                        addToBackStack("top")
                         commit()
                     }
 
@@ -91,6 +90,7 @@ class MainActivity : AppCompatActivity() {
         setupToolbar()
         setupWindowInsets()
         setupBroadcastReceivers()
+        setupBackStackListener()
     }
 
     private fun setupToolbar() {
@@ -114,6 +114,25 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupBackStackListener() {
+        supportFragmentManager.addOnBackStackChangedListener {
+            val fragment = supportFragmentManager.findFragmentById(R.id.list_pokemon_fragment)
+            if (fragment is PokemonDetail) {
+                displayHomeAsUpEnabled(true)
+            } else {
+                displayHomeAsUpEnabled(false)
+                toolbar.title = "POKEMON_LIST"
+            }
+        }
+    }
+
+    private fun displayHomeAsUpEnabled(enabled: Boolean) {
+        supportActionBar?.apply {
+            setDisplayHomeAsUpEnabled(enabled)
+            setDisplayShowHomeEnabled(enabled)
+        }
+    }
+
     private val showPokemonDetailReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == Common.KEY_ENABLE_HOME || intent?.action == Common.KEY_NUM_EVOLUTION) {
@@ -133,7 +152,7 @@ class MainActivity : AppCompatActivity() {
             val detailFragment = PokemonDetail.newInstance(num)
             supportFragmentManager.beginTransaction().apply {
                 replace(R.id.list_pokemon_fragment, detailFragment)
-                addToBackStack("detail")
+                addToBackStack("top")
                 commit()
             }
 
@@ -158,13 +177,22 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             android.R.id.home -> {
+                supportFragmentManager.popBackStack("top", FragmentManager.POP_BACK_STACK_INCLUSIVE)
                 toolbar.title = "POKEMON_LIST"
-                supportFragmentManager.popBackStack("detail", FragmentManager.POP_BACK_STACK_INCLUSIVE)
                 supportActionBar?.setDisplayHomeAsUpEnabled(false)
                 supportActionBar?.setDisplayShowHomeEnabled(false)
+                onBackPressed()
                 true
             }
             else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    override fun onBackPressed() {
+        if (supportFragmentManager.backStackEntryCount > 0) {
+            supportFragmentManager.popBackStack()
+        } else {
+            super.onBackPressed()
         }
     }
 }
