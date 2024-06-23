@@ -1,6 +1,7 @@
 package com.example.showpokemonlist
 
 import PokemonListAdapter
+import android.database.MatrixCursor
 import com.example.showpokemonlist.Common.Common
 import com.example.showpokemonlist.Common.ItemOffsetDecoration
 import com.example.showpokemonlist.Retrofit.IPokemonList
@@ -11,6 +12,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.widget.SearchView
+import androidx.cursoradapter.widget.CursorAdapter
+import androidx.cursoradapter.widget.SimpleCursorAdapter
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
@@ -26,6 +29,7 @@ class PokemonList : Fragment() {
 
     private var last_suggest: MutableList<String> = ArrayList()
     private lateinit var searchBar: SearchView
+    private lateinit var searchAdapter: SimpleCursorAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -60,12 +64,23 @@ class PokemonList : Fragment() {
                 return true
             }
         })
+
+        // SimpleCursorAdapterの設定
+        val from = arrayOf("suggestion")
+        val to = intArrayOf(android.R.id.text1)
+        searchAdapter = SimpleCursorAdapter(requireContext(), android.R.layout.simple_list_item_1, null, from, to, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER)
+        searchBar.suggestionsAdapter = searchAdapter
+
         return itemView
     }
 
     private fun updateSuggestions(query: String) {
         val suggestions = last_suggest.filter { it.lowercase().contains(query.lowercase()) }
-        // ここで検索候補を表示する処理を実装
+        val cursor = MatrixCursor(arrayOf("_id", "suggestion"))
+        suggestions.forEachIndexed { index, suggestion ->
+            cursor.addRow(arrayOf(index, suggestion))
+        }
+        searchAdapter.changeCursor(cursor)
     }
 
     private fun startSearch(text: String) {
@@ -79,21 +94,20 @@ class PokemonList : Fragment() {
 
 
     private fun fetchData() {
-        CoroutineScope(Dispatchers.IO).launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val pokemonDex = iPokemonList.listPokemon()
-                withContext(Dispatchers.Main) {
-                    Common.pokemonList = pokemonDex.pokemon!!
-                    adapter = PokemonListAdapter(requireActivity(), Common.pokemonList)
-                    pokemonRecyclerView.adapter = adapter
+                val pokemonDex = withContext(Dispatchers.IO) {
+                    iPokemonList.listPokemon()
+                }
+                Common.pokemonList = pokemonDex.pokemon ?: emptyList()
+                adapter = PokemonListAdapter(requireActivity(), Common.pokemonList)
+                pokemonRecyclerView.adapter = adapter
 
-                    last_suggest = Common.pokemonList.mapNotNull { it.name }.toMutableList()
-                    searchBar.visibility = View.VISIBLE
-                }
+                last_suggest.clear()
+                last_suggest.addAll(Common.pokemonList.mapNotNull { it.name })
+                searchBar.visibility = View.VISIBLE
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
+                Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
