@@ -99,5 +99,10 @@ class PokemonListAdapter(
         })
     }
 
+    fun updateList(newList: List<Pokemon>) {
+        pokemonList = newList
+        notifyDataSetChanged()
+    }
+
 
 }
