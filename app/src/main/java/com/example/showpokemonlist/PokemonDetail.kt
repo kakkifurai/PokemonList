@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -29,8 +30,14 @@ class PokemonDetail : Fragment() {
     private lateinit var recycler_next_evolution: RecyclerView
 
     companion object {
-        fun newInstance(): PokemonDetail {
-            return PokemonDetail()
+        private const val ARG_NUM = "num"
+
+        fun newInstance(num: String): PokemonDetail {
+            val fragment = PokemonDetail()
+            val args = Bundle()
+            args.putString(ARG_NUM, num)
+            fragment.arguments = args
+            return fragment
         }
     }
 
@@ -68,14 +75,8 @@ class PokemonDetail : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val pokemon: Pokemon? = arguments?.let {
-            val position = it.getInt("position", -1)
-            if (position != -1) {
-                Common.pokemonList.getOrNull(position)
-            } else {
-                Common.findPokemonByNum(it.getString("num") ?: "")
-            }
-        }
+        val num = requireArguments().getString(ARG_NUM)
+        val pokemon: Pokemon? = Common.findPokemonByNum(num)
 
         pokemon?.let {
             setDetailPokemon(it)

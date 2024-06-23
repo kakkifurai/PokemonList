@@ -30,15 +30,7 @@ class PokemonListAdapter(
         val imgPokemon: ImageView = itemView.findViewById(R.id.pokemon_image)
         val txtPokemon: TextView = itemView.findViewById(R.id.pokemon_name)
 
-        init {
-            itemView.setOnClickListener {
-                itemClickListener?.onClick(it, adapterPosition)
-            }
-        }
-
-        var itemClickListener: ItemClickListener? = null
-
-        fun bind(pokemon: Pokemon, itemClickListener: ItemClickListener?) {
+        fun bind(pokemon: Pokemon) {
             txtPokemon.text = pokemon.name
 
             Glide.with(context)
@@ -55,7 +47,6 @@ class PokemonListAdapter(
                     ): Boolean {
                         Log.e("GlideError", "Image load failed", e)
                         Toast.makeText(context, "Failed to load image", Toast.LENGTH_SHORT).show()
-                        e?.printStackTrace()
                         return false
                     }
 
@@ -73,7 +64,11 @@ class PokemonListAdapter(
                 .into(imgPokemon)
 
             itemView.setOnClickListener {
-                itemClickListener?.onClick(it, adapterPosition)
+                val num = pokemon.num ?: return@setOnClickListener
+                val intent = Intent(Common.KEY_ENABLE_HOME).apply {
+                    putExtra("num", num)
+                }
+                LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
             }
         }
     }
@@ -83,26 +78,15 @@ class PokemonListAdapter(
         return MyViewHolder(itemView)
     }
 
-    override fun getItemCount(): Int {
-        return pokemonList.size
-    }
-
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
         val pokemon = pokemonList[position]
-        holder.bind(pokemon, object : ItemClickListener {
-            override fun onClick(view: View, position: Int) {
-                //Toast.makeText(context, "Clicked on Pokemon: ${pokemonList[position].name}", Toast.LENGTH_SHORT).show()
-                Log.d("PokemonListAdapter", "Clicked on Pokemon ${pokemonList[position].name}")
-                LocalBroadcastManager.getInstance(context)
-                    .sendBroadcast(Intent(Common.KEY_ENABLE_HOME).putExtra("position",position))
-            }
-        })
+        holder.bind(pokemon)
     }
+
+    override fun getItemCount(): Int = pokemonList.size
 
     fun updateList(newList: List<Pokemon>) {
         pokemonList = newList
         notifyDataSetChanged()
     }
-
-
 }

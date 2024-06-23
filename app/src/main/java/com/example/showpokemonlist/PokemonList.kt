@@ -27,7 +27,7 @@ class PokemonList : Fragment() {
     private lateinit var pokemonRecyclerView: RecyclerView
     private lateinit var adapter: PokemonListAdapter
 
-    private var last_suggest: MutableList<String> = ArrayList()
+    private var lastSuggest: MutableList<String> = ArrayList()
     private lateinit var searchBar: SearchView
     private lateinit var searchAdapter: SimpleCursorAdapter
 
@@ -46,7 +46,6 @@ class PokemonList : Fragment() {
 
         val itemDecoration = ItemOffsetDecoration(requireContext(), R.dimen.spacing)
         pokemonRecyclerView.addItemDecoration(itemDecoration)
-
 
         fetchData()
 
@@ -83,6 +82,7 @@ class PokemonList : Fragment() {
                 try {
                     val suggestion = cursor.getString(cursor.getColumnIndexOrThrow("suggestion"))
                     searchBar.setQuery(suggestion, true)
+                    onPokemonSelected(suggestion)  // ポケモンが選択されたらそのポケモンを表示する
                 } catch (e: IllegalArgumentException) {
                     // 列が見つからない場合の処理
                     Toast.makeText(context, "Error: Column not found", Toast.LENGTH_SHORT).show()
@@ -91,12 +91,11 @@ class PokemonList : Fragment() {
             }
         })
 
-
         return itemView
     }
 
     private fun updateSuggestions(query: String) {
-        val suggestions = last_suggest.filter { it.lowercase().contains(query.lowercase()) }
+        val suggestions = lastSuggest.filter { it.lowercase().contains(query.lowercase()) }
         val cursor = MatrixCursor(arrayOf("_id", "suggestion"))
         suggestions.forEachIndexed { index, suggestion ->
             cursor.addRow(arrayOf(index, suggestion))
@@ -113,7 +112,6 @@ class PokemonList : Fragment() {
         }
     }
 
-
     private fun fetchData() {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
@@ -124,12 +122,27 @@ class PokemonList : Fragment() {
                 adapter = PokemonListAdapter(requireActivity(), Common.pokemonList)
                 pokemonRecyclerView.adapter = adapter
 
-                last_suggest.clear()
-                last_suggest.addAll(Common.pokemonList.mapNotNull { it.name })
+                lastSuggest.clear()
+                lastSuggest.addAll(Common.pokemonList.mapNotNull { it.name })
                 searchBar.visibility = View.VISIBLE
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    private fun onPokemonSelected(name: String) {
+        val selectedPokemon = Common.pokemonList.find { it.name == name }
+        selectedPokemon?.let {
+            val detailFragment = PokemonDetail.newInstance(it.num!!)
+            val fragmentTransaction = parentFragmentManager.beginTransaction()
+
+            // フラグメントトランザクションの設定
+            //fragmentTransaction.replace(R.id.fragment_container, detailFragment) // 修正箇所
+            fragmentTransaction.addToBackStack(null)
+            fragmentTransaction.commit()
+        } ?: run {
+            Toast.makeText(context, "Pokemon not found", Toast.LENGTH_SHORT).show()
         }
     }
 
