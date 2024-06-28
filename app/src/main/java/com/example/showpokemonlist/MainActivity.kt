@@ -12,7 +12,6 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.FragmentManager
-import androidx.fragment.app.FragmentTransaction
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.myapplication.R
 import com.example.showpokemonlist.Common.Common
@@ -21,18 +20,25 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var toolbar: Toolbar
 
+    // BroadcastReceiver for showing Pokemon type
     private val showPokemonType = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == Common.KEY_POKEMON_TYPE) {
                 val type = intent.getStringExtra("type")
-                if (type != null) {
-                    val typeFragment = PokemonType.newInstance(type)
-                    supportFragmentManager.beginTransaction().apply {
-                        replace(R.id.list_pokemon_fragment, typeFragment)
-                        addToBackStack(null)
-                        commit()
+                if (!type.isNullOrEmpty()) {
+                    // 現在のフラグメントを確認
+                    val currentFragment = supportFragmentManager.findFragmentById(R.id.list_pokemon_fragment)
+                    if (currentFragment !is PokemonType || currentFragment.arguments?.getString("type") != type) {
+                        // トランザクションを一度に行う
+                        supportFragmentManager.beginTransaction().apply {
+                            currentFragment?.let { remove(it) }
+                            val typeFragment = PokemonType.newInstance(type)
+                            replace(R.id.list_pokemon_fragment, typeFragment)
+                            addToBackStack(null)
+                            commitAllowingStateLoss()
+                        }
+                        toolbar?.title = "POKEMON TYPE: ${type.toUpperCase()}"
                     }
-                    toolbar.title = "POKEMON TYPE: ${type.toUpperCase()}"
                 } else {
                     Toast.makeText(this@MainActivity, "Invalid pokemon type", Toast.LENGTH_SHORT).show()
                 }
@@ -40,9 +46,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
-
-
+    // BroadcastReceiver for showing Pokemon detail
     private val showDetail = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == Common.KEY_ENABLE_HOME) {
@@ -53,6 +57,12 @@ class MainActivity : AppCompatActivity() {
 
                 val num = intent.getStringExtra("num")
                 if (num != null) {
+                    // Remove existing Fragment if any
+                    supportFragmentManager.findFragmentById(R.id.list_pokemon_fragment)?.let {
+                        supportFragmentManager.beginTransaction().remove(it).commit()
+                    }
+
+                    // Add new Fragment
                     val detailFragment = PokemonDetail.newInstance(num)
                     supportFragmentManager.beginTransaction().apply {
                         replace(R.id.list_pokemon_fragment, detailFragment)
@@ -75,6 +85,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // BroadcastReceiver for showing Pokemon evolution
     private val showEvolution = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == Common.KEY_NUM_EVOLUTION) {
@@ -84,6 +95,12 @@ class MainActivity : AppCompatActivity() {
                 }
                 val num = intent.getStringExtra("num")
                 if (num != null) {
+                    // Remove existing Fragment if any
+                    supportFragmentManager.findFragmentById(R.id.list_pokemon_fragment)?.let {
+                        supportFragmentManager.beginTransaction().remove(it).commit()
+                    }
+
+                    // Add new Fragment
                     val detailFragment = PokemonDetail.newInstance(num)
                     supportFragmentManager.beginTransaction().apply {
                         replace(R.id.list_pokemon_fragment, detailFragment)
@@ -173,20 +190,24 @@ class MainActivity : AppCompatActivity() {
 
         val num = intent?.getStringExtra("num")
         if (num != null) {
-            val detailFragment = PokemonDetail.newInstance(num)
-            supportFragmentManager.beginTransaction().apply {
-                replace(R.id.list_pokemon_fragment, detailFragment)
-                addToBackStack("top")
-                commit()
-            }
-
-            supportFragmentManager.addOnBackStackChangedListener {
-                val pokemon = Common.findPokemonByNum(num)
-                pokemon?.let {
-                    toolbar.title = it.name
-                } ?: run {
-                    Toast.makeText(this, "Pokemon not found", Toast.LENGTH_SHORT).show()
+            try {
+                val detailFragment = PokemonDetail.newInstance(num)
+                supportFragmentManager.beginTransaction().apply {
+                    replace(R.id.list_pokemon_fragment, detailFragment)
+                    addToBackStack("top")
+                    commit()
                 }
+
+                supportFragmentManager.addOnBackStackChangedListener {
+                    val pokemon = Common.findPokemonByNum(num)
+                    pokemon?.let {
+                        toolbar.title = it.name
+                    } ?: run {
+                        Toast.makeText(this, "Pokemon not found", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         } else {
             Toast.makeText(this, "Invalid pokemon number", Toast.LENGTH_SHORT).show()
@@ -195,7 +216,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(showPokemonDetailReceiver)
+        LocalBroadcastManager.getInstance(this).apply {
+            unregisterReceiver(showPokemonDetailReceiver)
+            unregisterReceiver(showEvolution)
+            unregisterReceiver(showPokemonType)
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -217,7 +242,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     override fun onBackPressed() {
         if (supportFragmentManager.backStackEntryCount > 0) {
             supportFragmentManager.popBackStack()
@@ -227,13 +251,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showPokemonListFragment() {
-        val fragment = PokemonList.newInstance()  // PokemonList.newInstance() メソッドを使用
+        val fragment = PokemonList.newInstance()
         supportFragmentManager.beginTransaction().apply {
             replace(R.id.list_pokemon_fragment, fragment)
             commit()
         }
-        toolbar.title = "POKEMON LIST"  // ツールバーのタイトルを更新
-        supportActionBar?.setDisplayHomeAsUpEnabled(false)  // 戻るボタンを非表示
+        toolbar.title = "POKEMON LIST"
+        supportActionBar?.setDisplayHomeAsUpEnabled(false)
     }
-
 }

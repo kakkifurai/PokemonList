@@ -4,7 +4,7 @@
     android:background="@color/black"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".PokemonDetail">
+    tools:context="com.example.showpokemonlist.PokemonDetail">
 
     <RelativeLayout
         android:layout_width="match_parent"
