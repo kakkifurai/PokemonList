@@ -113,8 +113,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showPokemonListFragment() {
+        // バックスタックをクリアし、PokemonListフラグメントを表示
         supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-        showInitialFragment()
+        val fragment = PokemonList.newInstance()
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.list_pokemon_fragment, fragment)
+            .commit()
+        updateToolbar("POKEMON LIST", false)
     }
 
     fun updateToolbar(title: String, showBackButton: Boolean) {
@@ -129,7 +134,7 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             android.R.id.home -> {
-                onBackPressedDispatcher.onBackPressed()
+                showPokemonListFragment()
                 true
             }
             else -> super.onOptionsItemSelected(item)
