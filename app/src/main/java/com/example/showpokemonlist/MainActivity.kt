@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.myapplication.R
@@ -26,19 +27,7 @@ class MainActivity : AppCompatActivity() {
             if (intent?.action == Common.KEY_POKEMON_TYPE) {
                 val type = intent.getStringExtra("type")
                 if (!type.isNullOrEmpty()) {
-                    // 現在のフラグメントを確認
-                    val currentFragment = supportFragmentManager.findFragmentById(R.id.list_pokemon_fragment)
-                    if (currentFragment !is PokemonType || currentFragment.arguments?.getString("type") != type) {
-                        // トランザクションを一度に行う
-                        supportFragmentManager.beginTransaction().apply {
-                            currentFragment?.let { remove(it) }
-                            val typeFragment = PokemonType.newInstance(type)
-                            replace(R.id.list_pokemon_fragment, typeFragment)
-                            addToBackStack(null)
-                            commitAllowingStateLoss()
-                        }
-                        toolbar?.title = "POKEMON TYPE: ${type.toUpperCase()}"
-                    }
+                    showFragment(PokemonType.newInstance(type), "POKEMON TYPE: ${type.uppercase()}")
                 } else {
                     Toast.makeText(this@MainActivity, "Invalid pokemon type", Toast.LENGTH_SHORT).show()
                 }
@@ -54,30 +43,9 @@ class MainActivity : AppCompatActivity() {
                     setDisplayHomeAsUpEnabled(true)
                     setDisplayShowHomeEnabled(true)
                 }
-
                 val num = intent.getStringExtra("num")
-                if (num != null) {
-                    // Remove existing Fragment if any
-                    supportFragmentManager.findFragmentById(R.id.list_pokemon_fragment)?.let {
-                        supportFragmentManager.beginTransaction().remove(it).commit()
-                    }
-
-                    // Add new Fragment
-                    val detailFragment = PokemonDetail.newInstance(num)
-                    supportFragmentManager.beginTransaction().apply {
-                        replace(R.id.list_pokemon_fragment, detailFragment)
-                        addToBackStack("top")
-                        commit()
-                    }
-
-                    supportFragmentManager.addOnBackStackChangedListener {
-                        val pokemon = Common.findPokemonByNum(num)
-                        pokemon?.let {
-                            toolbar.title = it.name
-                        } ?: run {
-                            Toast.makeText(this@MainActivity, "Pokemon not found", Toast.LENGTH_SHORT).show()
-                        }
-                    }
+                if (!num.isNullOrEmpty()) {
+                    showFragment(PokemonDetail.newInstance(num), Common.findPokemonByNum(num)?.name ?: "Pokemon Detail")
                 } else {
                     Toast.makeText(this@MainActivity, "Invalid pokemon number", Toast.LENGTH_SHORT).show()
                 }
@@ -94,28 +62,8 @@ class MainActivity : AppCompatActivity() {
                     setDisplayShowHomeEnabled(true)
                 }
                 val num = intent.getStringExtra("num")
-                if (num != null) {
-                    // Remove existing Fragment if any
-                    supportFragmentManager.findFragmentById(R.id.list_pokemon_fragment)?.let {
-                        supportFragmentManager.beginTransaction().remove(it).commit()
-                    }
-
-                    // Add new Fragment
-                    val detailFragment = PokemonDetail.newInstance(num)
-                    supportFragmentManager.beginTransaction().apply {
-                        replace(R.id.list_pokemon_fragment, detailFragment)
-                        addToBackStack("top")
-                        commit()
-                    }
-
-                    supportFragmentManager.addOnBackStackChangedListener {
-                        val pokemon = Common.findPokemonByNum(num)
-                        pokemon?.let {
-                            toolbar.title = it.name
-                        } ?: run {
-                            Toast.makeText(this@MainActivity, "Pokemon not found", Toast.LENGTH_SHORT).show()
-                        }
-                    }
+                if (!num.isNullOrEmpty()) {
+                    showFragment(PokemonDetail.newInstance(num), Common.findPokemonByNum(num)?.name ?: "Pokemon Detail")
                 } else {
                     Toast.makeText(this@MainActivity, "Invalid pokemon number", Toast.LENGTH_SHORT).show()
                 }
@@ -127,10 +75,22 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // ツールバーのセットアップ
         setupToolbar()
+
+        // ウィンドウインセットのセットアップ
         setupWindowInsets()
+
+        // ブロードキャストレシーバーのセットアップ
         setupBroadcastReceivers()
+
+        // バックスタックリスナーのセットアップ
         setupBackStackListener()
+
+        // 初期フラグメントを表示
+        if (savedInstanceState == null) {
+            showInitialFragment()
+        }
     }
 
     private fun setupToolbar() {
@@ -149,7 +109,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupBroadcastReceivers() {
         LocalBroadcastManager.getInstance(this).apply {
-            registerReceiver(showPokemonDetailReceiver, IntentFilter(Common.KEY_ENABLE_HOME))
+            registerReceiver(showDetail, IntentFilter(Common.KEY_ENABLE_HOME))
             registerReceiver(showEvolution, IntentFilter(Common.KEY_NUM_EVOLUTION))
             registerReceiver(showPokemonType, IntentFilter(Common.KEY_POKEMON_TYPE))
         }
@@ -174,50 +134,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val showPokemonDetailReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == Common.KEY_ENABLE_HOME || intent?.action == Common.KEY_NUM_EVOLUTION) {
-                showPokemonDetail(intent)
-            }
+    private fun showFragment(fragment: Fragment, title: String) {
+        supportFragmentManager.beginTransaction().apply {
+            replace(R.id.list_pokemon_fragment, fragment)
+            addToBackStack(null)
+            commit()
         }
-    }
-
-    private fun showPokemonDetail(intent: Intent?) {
-        supportActionBar?.apply {
-            setDisplayHomeAsUpEnabled(true)
-            setDisplayShowHomeEnabled(true)
-        }
-
-        val num = intent?.getStringExtra("num")
-        if (num != null) {
-            try {
-                val detailFragment = PokemonDetail.newInstance(num)
-                supportFragmentManager.beginTransaction().apply {
-                    replace(R.id.list_pokemon_fragment, detailFragment)
-                    addToBackStack("top")
-                    commit()
-                }
-
-                supportFragmentManager.addOnBackStackChangedListener {
-                    val pokemon = Common.findPokemonByNum(num)
-                    pokemon?.let {
-                        toolbar.title = it.name
-                    } ?: run {
-                        Toast.makeText(this, "Pokemon not found", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            } catch (e: Exception) {
-                Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-        } else {
-            Toast.makeText(this, "Invalid pokemon number", Toast.LENGTH_SHORT).show()
-        }
+        toolbar.title = title
     }
 
     override fun onDestroy() {
         super.onDestroy()
         LocalBroadcastManager.getInstance(this).apply {
-            unregisterReceiver(showPokemonDetailReceiver)
+            unregisterReceiver(showDetail)
             unregisterReceiver(showEvolution)
             unregisterReceiver(showPokemonType)
         }
@@ -226,16 +155,8 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             android.R.id.home -> {
-                // バックスタックをクリア
                 supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-
-                // PokemonListフラグメントを表示
                 showPokemonListFragment()
-
-                // ツールバーの設定を更新
-                toolbar.title = "POKEMON_LIST"
-                supportActionBar?.setDisplayHomeAsUpEnabled(false)
-                supportActionBar?.setDisplayShowHomeEnabled(false)
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -257,6 +178,13 @@ class MainActivity : AppCompatActivity() {
             commit()
         }
         toolbar.title = "POKEMON LIST"
-        supportActionBar?.setDisplayHomeAsUpEnabled(false)
+        displayHomeAsUpEnabled(false)
+    }
+
+    private fun showInitialFragment() {
+        val initialFragment = PokemonList.newInstance()
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.list_pokemon_fragment, initialFragment)
+            .commit()
     }
 }
