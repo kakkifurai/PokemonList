@@ -1,3 +1,5 @@
+package com.example.showpokemonlist.Adapter
+
 import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.Drawable
@@ -18,7 +20,6 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.example.myapplication.R
 import com.example.showpokemonlist.Common.Common
-import com.example.showpokemonlist.Interface.ItemClickListener
 import com.example.showpokemonlist.Model.Pokemon
 
 class PokemonListAdapter(
@@ -27,8 +28,8 @@ class PokemonListAdapter(
 ) : RecyclerView.Adapter<PokemonListAdapter.MyViewHolder>() {
 
     inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val imgPokemon: ImageView = itemView.findViewById(R.id.pokemon_image)
-        val txtPokemon: TextView = itemView.findViewById(R.id.pokemon_name)
+        private val imgPokemon: ImageView = itemView.findViewById(R.id.pokemon_image)
+        private val txtPokemon: TextView = itemView.findViewById(R.id.pokemon_name)
 
         fun bind(pokemon: Pokemon) {
             txtPokemon.text = pokemon.name

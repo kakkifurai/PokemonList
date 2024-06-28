@@ -1,6 +1,6 @@
 package com.example.showpokemonlist
 
-import PokemonListAdapter
+import com.example.showpokemonlist.Adapter.PokemonListAdapter
 import android.database.MatrixCursor
 import com.example.showpokemonlist.Common.Common
 import com.example.showpokemonlist.Common.ItemOffsetDecoration

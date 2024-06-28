@@ -10,7 +10,7 @@ object Common {
 
 
     fun findPokemonByNum(num:String?):Pokemon?{
-        for (pokemon:Pokemon in Common.pokemonList)
+        for (pokemon:Pokemon in pokemonList)
             if (pokemon.num.equals(num))
                 return pokemon
         return null
@@ -39,7 +39,7 @@ object Common {
     }
 
     fun findPokemonByType(type: String): List<Pokemon> {
-        return Common.pokemonList.filter { pokemon ->
+        return pokemonList.filter { pokemon ->
             pokemon.type?.contains(type) == true
         }
     }
@@ -47,7 +47,7 @@ object Common {
 
 
     var pokemonList:List<Pokemon> = ArrayList()
-    val KEY_ENABLE_HOME = "position"
-    val KEY_NUM_EVOLUTION = "evolution"
-    val KEY_POKEMON_TYPE = "type"
+    const val KEY_ENABLE_HOME = "position"
+    const val KEY_NUM_EVOLUTION = "evolution"
+    const val KEY_POKEMON_TYPE = "type"
 }

@@ -1,6 +1,6 @@
 package com.example.showpokemonlist
 
-import PokemonListAdapter
+import com.example.showpokemonlist.Adapter.PokemonListAdapter
 import android.database.MatrixCursor
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -90,8 +90,7 @@ class PokemonType : Fragment() {
                     Common.findPokemonByType(type)
                 }
                 if (typeList.isNotEmpty()) {
-                    adapter = PokemonListAdapter(requireActivity(), typeList)
-                    pokemonRecyclerView.adapter = adapter
+                    initializeAdapter()
                     loadSuggest()
                 } else {
                     Toast.makeText(context, getString(R.string.no_pokemon_found), Toast.LENGTH_SHORT).show()
@@ -100,6 +99,11 @@ class PokemonType : Fragment() {
                 Toast.makeText(context, getString(R.string.pokemon_type_not_found), Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    private fun initializeAdapter() {
+        adapter = PokemonListAdapter(requireActivity(), typeList)
+        pokemonRecyclerView.adapter = adapter
     }
 
     private fun setupSearchAdapter() {
@@ -153,6 +157,11 @@ class PokemonType : Fragment() {
     }
 
     private fun startSearch(text: String) {
+        if (!::adapter.isInitialized) {
+            Toast.makeText(context, "Adapter is not initialized", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val result = typeList.filter { pokemon ->
             pokemon.name?.lowercase()?.contains(text.lowercase()) == true
         }
@@ -160,7 +169,9 @@ class PokemonType : Fragment() {
     }
 
     private fun resetSearch() {
-        adapter.updateList(typeList)
+        if (::adapter.isInitialized) {
+            adapter.updateList(typeList)
+        }
         searchBar.clearFocus()
     }
 

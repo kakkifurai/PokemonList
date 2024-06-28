@@ -19,7 +19,7 @@ class PokemonEvolutionAdapter(
 ) : RecyclerView.Adapter<PokemonEvolutionAdapter.MyViewHolder>() {
 
     inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var chip: Chip = itemView.findViewById(R.id.chip)
+        private var chip: Chip = itemView.findViewById(R.id.chip)
 
         init {
             chip.setOnClickListener {
