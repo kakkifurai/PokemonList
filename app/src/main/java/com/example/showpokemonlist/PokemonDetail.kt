@@ -6,7 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -15,6 +17,9 @@ import com.example.showpokemonlist.Adapter.PokemonEvolutionAdapter
 import com.example.showpokemonlist.Adapter.PokemonTypeAdapter
 import com.example.showpokemonlist.Common.Common
 import com.example.showpokemonlist.Model.Pokemon
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class PokemonDetail : Fragment() {
 
@@ -75,11 +80,25 @@ class PokemonDetail : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val num = requireArguments().getString(ARG_NUM)
-        val pokemon: Pokemon? = Common.findPokemonByNum(num)
-
-        pokemon?.let {
-            setDetailPokemon(it)
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val pokemon = withContext(Dispatchers.Default) {
+                    Common.findPokemonByNum(num)
+                }
+                if (pokemon != null) {
+                    setDetailPokemon(pokemon)
+                } else {
+                    showErrorMessage("Pokemon not found")
+                }
+            } catch (e: Exception) {
+                showErrorMessage("Error loading Pokemon details: ${e.message}")
+            }
         }
+    }
+
+    private fun showErrorMessage(message: String) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        // オプション: エラーメッセージを表示するUIを更新
     }
 
     private fun setDetailPokemon(pokemon: Pokemon) {

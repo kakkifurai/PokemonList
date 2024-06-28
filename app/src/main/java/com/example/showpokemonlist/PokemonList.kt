@@ -159,14 +159,21 @@ class PokemonList : Fragment() {
                     iPokemonList.listPokemon()
                 }
                 Common.pokemonList = pokemonDex.pokemon ?: emptyList()
-                adapter = PokemonListAdapter(requireActivity(), Common.pokemonList)
-                pokemonRecyclerView.adapter = adapter
 
-                lastSuggest.clear()
-                lastSuggest.addAll(Common.pokemonList.mapNotNull { it.name })
-                searchBar.visibility = View.VISIBLE
+                // フラグメントがアクティブであることを確認
+                if (isAdded && view != null) {
+                    adapter = PokemonListAdapter(requireActivity(), Common.pokemonList)
+                    pokemonRecyclerView.adapter = adapter
+
+                    lastSuggest.clear()
+                    lastSuggest.addAll(Common.pokemonList.mapNotNull { it.name })
+                    searchBar.visibility = View.VISIBLE
+                }
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                // フラグメントがアクティブであることを確認
+                if (isAdded && view != null) {
+                    Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
