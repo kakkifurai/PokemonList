@@ -12,6 +12,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.FragmentTransaction
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.myapplication.R
 import com.example.showpokemonlist.Common.Common
@@ -19,6 +20,28 @@ import com.example.showpokemonlist.Common.Common
 class MainActivity : AppCompatActivity() {
 
     private lateinit var toolbar: Toolbar
+
+    private val showPokemonType = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == Common.KEY_POKEMON_TYPE) {
+                val type = intent.getStringExtra("type")
+                if (type != null) {
+                    val typeFragment = PokemonType.newInstance(type)
+                    supportFragmentManager.beginTransaction().apply {
+                        replace(R.id.list_pokemon_fragment, typeFragment)
+                        addToBackStack(null)
+                        commit()
+                    }
+                    toolbar.title = "POKEMON TYPE: ${type.toUpperCase()}"
+                } else {
+                    Toast.makeText(this@MainActivity, "Invalid pokemon type", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+
+
 
     private val showDetail = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -110,7 +133,8 @@ class MainActivity : AppCompatActivity() {
     private fun setupBroadcastReceivers() {
         LocalBroadcastManager.getInstance(this).apply {
             registerReceiver(showPokemonDetailReceiver, IntentFilter(Common.KEY_ENABLE_HOME))
-            registerReceiver(showPokemonDetailReceiver, IntentFilter(Common.KEY_NUM_EVOLUTION))
+            registerReceiver(showEvolution, IntentFilter(Common.KEY_NUM_EVOLUTION))
+            registerReceiver(showPokemonType, IntentFilter(Common.KEY_POKEMON_TYPE))
         }
     }
 
@@ -177,16 +201,22 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             android.R.id.home -> {
-                supportFragmentManager.popBackStack("top", FragmentManager.POP_BACK_STACK_INCLUSIVE)
+                // バックスタックをクリア
+                supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+
+                // PokemonListフラグメントを表示
+                showPokemonListFragment()
+
+                // ツールバーの設定を更新
                 toolbar.title = "POKEMON_LIST"
                 supportActionBar?.setDisplayHomeAsUpEnabled(false)
                 supportActionBar?.setDisplayShowHomeEnabled(false)
-                onBackPressed()
                 true
             }
             else -> super.onOptionsItemSelected(item)
         }
     }
+
 
     override fun onBackPressed() {
         if (supportFragmentManager.backStackEntryCount > 0) {
@@ -195,4 +225,15 @@ class MainActivity : AppCompatActivity() {
             super.onBackPressed()
         }
     }
+
+    private fun showPokemonListFragment() {
+        val fragment = PokemonList.newInstance()  // PokemonList.newInstance() メソッドを使用
+        supportFragmentManager.beginTransaction().apply {
+            replace(R.id.list_pokemon_fragment, fragment)
+            commit()
+        }
+        toolbar.title = "POKEMON LIST"  // ツールバーのタイトルを更新
+        supportActionBar?.setDisplayHomeAsUpEnabled(false)  // 戻るボタンを非表示
+    }
+
 }

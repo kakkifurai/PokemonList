@@ -7,6 +7,8 @@ import com.example.showpokemonlist.Model.Pokemon
 
 
 object Common {
+
+
     fun findPokemonByNum(num:String?):Pokemon?{
         for (pokemon:Pokemon in Common.pokemonList)
             if (pokemon.num.equals(num))
@@ -36,8 +38,16 @@ object Common {
         }
     }
 
+    fun findPokemonByType(type: String): List<Pokemon> {
+        return Common.pokemonList.filter { pokemon ->
+            pokemon.type?.contains(type) == true
+        }
+    }
+
+
 
     var pokemonList:List<Pokemon> = ArrayList()
     val KEY_ENABLE_HOME = "position"
     val KEY_NUM_EVOLUTION = "evolution"
+    val KEY_POKEMON_TYPE = "type"
 }

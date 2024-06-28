@@ -1,11 +1,13 @@
 package com.example.showpokemonlist.Adapter
 
 import android.content.Context
+import android.content.Intent
 import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
 import com.example.showpokemonlist.Common.Common
@@ -19,7 +21,10 @@ class PokemonTypeAdapter(private val context: Context, private val typeList: Lis
 
         init {
             chip.setOnClickListener {
-                Toast.makeText(context, "Clicked: ${chip.text}", Toast.LENGTH_SHORT).show()
+                if (adapterPosition != RecyclerView.NO_POSITION && adapterPosition < typeList.size) {
+                    LocalBroadcastManager.getInstance(context)
+                        .sendBroadcast(Intent(Common.KEY_POKEMON_TYPE).putExtra("type", typeList[adapterPosition]))
+                }
             }
         }
     }

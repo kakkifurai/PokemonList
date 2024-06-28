@@ -2,11 +2,8 @@ package com.example.showpokemonlist
 
 import PokemonListAdapter
 import android.database.MatrixCursor
-import com.example.showpokemonlist.Common.Common
-import com.example.showpokemonlist.Common.ItemOffsetDecoration
-import com.example.showpokemonlist.Retrofit.IPokemonList
-import com.example.showpokemonlist.Retrofit.RetrofitClient
 import android.os.Bundle
+import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,34 +11,36 @@ import android.widget.Toast
 import androidx.appcompat.widget.SearchView
 import androidx.cursoradapter.widget.CursorAdapter
 import androidx.cursoradapter.widget.SimpleCursorAdapter
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
-import kotlinx.coroutines.*
+import com.example.showpokemonlist.Common.Common
+import com.example.showpokemonlist.Common.ItemOffsetDecoration
+import com.example.showpokemonlist.Model.Pokemon
+import com.example.showpokemonlist.Retrofit.IPokemonList
+import com.example.showpokemonlist.Retrofit.RetrofitClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-class PokemonList : Fragment() {
-
-    private lateinit var iPokemonList: IPokemonList//iPokemonListは、ポケモンのリストを取得するためのインターフェースです。lateinitキーワードを使用して後から初期化
+class PokemonType : Fragment() {
+    private lateinit var typeList: List<Pokemon>
     private lateinit var pokemonRecyclerView: RecyclerView//pokemonRecyclerViewは、ポケモンのリストを表示するためのRecyclerViewを指します。
     private lateinit var adapter: PokemonListAdapter//adapterは、RecyclerViewにデータを供給する
     private var lastSuggest: MutableList<String> = ArrayList()//lastSuggestは、検索バーに表示するポケモンの名前を保持するリストです。
     private lateinit var searchBar: SearchView//検索バー
     private lateinit var searchAdapter: SimpleCursorAdapter//検索結果を表示するためのアダプター
 
-    companion object{
-        internal var instance:PokemonList? = null
+    companion object {
+        private const val ARG_NUM = "num"
 
-
-        fun getInstance():PokemonList{
-            if (instance == null)
-                instance = PokemonList()
-            return  instance!!
-        }
-
-        fun newInstance(): Fragment {
-            return PokemonList()
+        fun newInstance(num: String): PokemonType {
+            val fragment = PokemonType()
+            val args = Bundle()
+            args.putString(ARG_NUM, num)
+            fragment.arguments = args
+            return fragment
         }
     }
 
@@ -50,12 +49,11 @@ class PokemonList : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val itemView = inflater.inflate(R.layout.fragment_pokemon_list, container, false)//レイアウトファイルfragment_pokemon_list.xmlをインフレートして、ビューを作成します。
-
-        //Retrofitクライアントを使用してIPokemonListインターフェースのインスタンスを取得します。
-        //Retrofitとは、型安全な Android 向けの HTTP クライアントライブラリ
-        val retrofit = RetrofitClient.instance
-        iPokemonList = retrofit.create(IPokemonList::class.java)
+        val itemView = inflater.inflate(
+            R.layout.fragment_pokemon_list,
+            container,
+            false
+        )
 
         //RecyclerViewをitemViewから取得し、固定サイズに設定します。
         //GridLayoutManagerを使用して2列のグリッドレイアウトを設定します。
@@ -68,7 +66,7 @@ class PokemonList : Fragment() {
         pokemonRecyclerView.addItemDecoration(itemDecoration)
 
         //ポケモンデータを取得するためのメソッドを呼び出します。
-        fetchData()
+       // fetchData()
 
         // SearchViewの設定(検索)
         searchBar = itemView.findViewById(R.id.search_bar)
@@ -78,6 +76,7 @@ class PokemonList : Fragment() {
                 query?.let { startSearch(it) }
                 return true
             }
+
 
             override fun onQueryTextChange(newText: String?): Boolean {
                 newText?.let {
@@ -91,6 +90,18 @@ class PokemonList : Fragment() {
                 return true
             }
         })
+
+
+        if (arguments != null) {
+            val type = arguments?.getString("type")
+            if (type != null) {
+                typeList = Common.findPokemonByType(type)
+                adapter = PokemonListAdapter(requireActivity(), typeList)
+                pokemonRecyclerView.adapter = adapter
+
+                loadSuggest()
+            }
+        }
 
         // SimpleCursorAdapterの設定
         //検索結果を表示するためのSimpleCursorAdapterを設定し、SearchViewに関連付けます。
@@ -125,6 +136,33 @@ class PokemonList : Fragment() {
         return itemView
     }
 
+    private fun loadSuggest() {
+        lastSuggest.clear()
+        if (typeList.isNotEmpty()) {
+            for (pokemon: Pokemon in typeList) {
+                pokemon.name?.let { name ->
+                    lastSuggest.add(name)
+                }
+            }
+        }
+
+        // 検索候補のアダプターを更新する
+        val cursor = MatrixCursor(arrayOf("_id", "suggestion"))
+        lastSuggest.forEachIndexed { index, suggestion ->
+            cursor.addRow(arrayOf(index, suggestion))
+        }
+
+        if (::searchAdapter.isInitialized) {
+            searchAdapter.changeCursor(cursor)
+        } else {
+            val from = arrayOf("suggestion")
+            val to = intArrayOf(android.R.id.text1)
+            searchAdapter = SimpleCursorAdapter(requireContext(), android.R.layout.simple_list_item_1, cursor, from, to, 0)
+            searchBar.suggestionsAdapter = searchAdapter
+        }
+    }
+
+
     //検索クエリに基づいて提案された検索結果を更新し、カーソルに追加します。
     private fun updateSuggestions(query: String) {
         val suggestions = lastSuggest.filter { it.lowercase().contains(query.lowercase()) }
@@ -137,13 +175,28 @@ class PokemonList : Fragment() {
 
     //ユーザーの入力に基づいてポケモンを検索し、結果をRecyclerViewに表示します。
     private fun startSearch(text: String) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            val result = withContext(Dispatchers.Default) {
-                Common.pokemonList.filter { it.name?.lowercase()?.contains(text.lowercase()) == true }
+        if (typeList.isNotEmpty()) {
+            // 検索結果のリストをフィルタリング
+            val result = typeList.filter { pokemon ->
+                pokemon.name?.lowercase()?.contains(text.lowercase()) == true
             }
-            adapter.updateList(result)
+
+            activity?.let { safeActivity ->
+                if (::adapter.isInitialized) {
+                    // アダプターが既に初期化されている場合はリストを更新
+                    adapter.updateList(result)
+                } else {
+                    // アダプターが初期化されていない場合は新しいアダプターを作成
+                    adapter = PokemonListAdapter(safeActivity, result)
+                    pokemonRecyclerView.adapter = adapter
+                }
+            } ?: run {
+                // Activity が利用できない場合のエラーハンドリング
+                Toast.makeText(context, "Activity is not available", Toast.LENGTH_SHORT).show()
+            }
         }
     }
+
 
     //検索をリセットして、全てのポケモンを表示します。
     private fun resetSearch() {
@@ -152,24 +205,24 @@ class PokemonList : Fragment() {
     }
 
     //非同期でポケモンデータを取得し、RecyclerViewに設定します。また、lastSuggestリストを更新します。
-    private fun fetchData() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                val pokemonDex = withContext(Dispatchers.IO) {
-                    iPokemonList.listPokemon()
-                }
-                Common.pokemonList = pokemonDex.pokemon ?: emptyList()
-                adapter = PokemonListAdapter(requireActivity(), Common.pokemonList)
-                pokemonRecyclerView.adapter = adapter
-
-                lastSuggest.clear()
-                lastSuggest.addAll(Common.pokemonList.mapNotNull { it.name })
-                searchBar.visibility = View.VISIBLE
-            } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
+//    private fun fetchData() {
+//        viewLifecycleOwner.lifecycleScope.launch {
+//            try {
+//                val pokemonDex = withContext(Dispatchers.IO) {
+//                    iPokemonList.listPokemon()
+//                }
+//                Common.pokemonList = pokemonDex.pokemon ?: emptyList()
+//                adapter = PokemonListAdapter(requireActivity(), Common.pokemonList)
+//                pokemonRecyclerView.adapter = adapter
+//
+//                lastSuggest.clear()
+//                lastSuggest.addAll(Common.pokemonList.mapNotNull { it.name })
+//                searchBar.visibility = View.VISIBLE
+//            } catch (e: Exception) {
+//                Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+//            }
+//        }
+//    }
 
 
     //ユーザーが選択したポケモンを検索し、詳細画面を表示します
