@@ -47,6 +47,10 @@ class PokemonType : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val itemView = inflater.inflate(R.layout.fragment_pokemon_type, container, false)
+        val type = arguments?.getString(ARG_TYPE)
+        type?.let {
+            (activity as? MainActivity)?.updateToolbar("TYPE: ${it.uppercase()}", true)
+        }
 
         setupRecyclerView(itemView)
         setupSearchBar(itemView)
