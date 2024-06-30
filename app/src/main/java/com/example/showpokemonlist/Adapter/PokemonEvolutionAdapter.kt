@@ -16,15 +16,16 @@ import com.google.android.material.chip.Chip
 //このクラスは、ポケモンの進化のリストを表示するために使用されます。
 
 //RecyclerView.Adapter を継承 。MyViewHolder を指定。
-//context はアプリケーションの状態やリソースにアクセスするために使用され、evolutionList は進化情報のリストです。
 class PokemonEvolutionAdapter(
-    private val context: Context,
-    private val evolutionList: List<Evolution>
+    private val context: Context,//context はアプリケーションの状態やリソースにアクセスするために使用
+    private val evolutionList: List<Evolution>//進化情報のリスト
 ) : RecyclerView.Adapter<PokemonEvolutionAdapter.MyViewHolder>() {
 
+    //RecyclerView の各アイテムビューの保持と管理
     inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private var chip: Chip = itemView.findViewById(R.id.chip)
+        private var chip: Chip = itemView.findViewById(R.id.chip)//chip_itemxmlからテンプレートを取得
 
+        //クリックした時の処理を記入
         init {
             chip.setOnClickListener {
                 // LocalBroadcastManagerのインスタンスを取得
@@ -47,25 +48,16 @@ class PokemonEvolutionAdapter(
             val japaneseName = evolution.name?.let { Common.getPokemonNameInJapanese(context, it) } ?: "不明なポケモン"
             chip.text = japaneseName
 
+            // ポケモンのタイプに基づいて色を設定
             val pokemon = Common.findPokemonByNum(evolution.num)
-            val pokemonType = pokemon?.type?.getOrNull(0)
+            val pokemonType = pokemon?.type?.getOrNull(0) ?: "default"
 
-            try {
-                if (pokemonType != null) {
-                    // 色を直接取得して設定
-                    val color = Common.getColorByType(pokemonType)
-                    chip.chipBackgroundColor = ColorStateList.valueOf(color)
-                } else {
-                    // デフォルトの色を設定
-                    val defaultColor = context.resources.getColor(R.color.default_chip_color, null)
-                    chip.chipBackgroundColor = ColorStateList.valueOf(defaultColor)
-                }
-            } catch (e: IllegalArgumentException) {
-                // デフォルトの色を設定
-                val defaultColor = context.resources.getColor(R.color.default_chip_color, null)
-                chip.chipBackgroundColor = ColorStateList.valueOf(defaultColor)
-            }
+            // getColorByTypeで色を設定
+            val color = Common.getColorByType(pokemonType)
+            chip.chipBackgroundColor = ColorStateList.valueOf(color)
         }
+
+
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {

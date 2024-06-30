@@ -35,21 +35,17 @@ class PokemonTypeAdapter(private val context: Context, private val typeList: Lis
     }
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
-        val type = typeList[position]
+        val type = typeList[position] ?: "default"
 
         // タイプ名を日本語に変換してセット
         holder.chip.text = getLocalizedTypeName(type)
 
-        try {
-            // 色を直接取得して設定
-            val color = Common.getColorByType(type)
-            holder.chip.chipBackgroundColor = ColorStateList.valueOf(color)
-        } catch (e: IllegalArgumentException) {
-            // デフォルトの色を設定
-            val defaultColor = context.resources.getColor(R.color.default_chip_color, null)
-            holder.chip.chipBackgroundColor = ColorStateList.valueOf(defaultColor)
-        }
+        // 色を直接取得して設定
+        val color = Common.getColorByType(type)
+        holder.chip.chipBackgroundColor = ColorStateList.valueOf(color)
     }
+
+
 
     override fun getItemCount(): Int {
         return typeList.size
