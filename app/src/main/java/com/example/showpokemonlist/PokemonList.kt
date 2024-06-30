@@ -19,6 +19,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
+import com.example.showpokemonlist.Model.Pokemon
 import kotlinx.coroutines.*
 
 class PokemonList : Fragment() {
@@ -72,7 +73,7 @@ class PokemonList : Fragment() {
 
         // SearchViewの設定(検索)
         searchBar = itemView.findViewById(R.id.search_bar)
-        searchBar.queryHint = "Enter Pokemon Name"
+        searchBar.queryHint = "ポケモンの名前を入力（2文字以上）"
         searchBar.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 query?.let { startSearch(it) }
@@ -127,22 +128,38 @@ class PokemonList : Fragment() {
 
     //検索クエリに基づいて提案された検索結果を更新し、カーソルに追加します。
     private fun updateSuggestions(query: String) {
-        val suggestions = lastSuggest.filter { it.lowercase().contains(query.lowercase()) }
+        // 日本語名に部分一致するポケモン名をフィルタリング
+        val suggestions = lastSuggest.filter { japaneseName ->
+            japaneseName.lowercase().contains(query.lowercase())
+        }
+
+        // 検索候補をCursorに変換
         val cursor = MatrixCursor(arrayOf("_id", "suggestion"))
         suggestions.forEachIndexed { index, suggestion ->
             cursor.addRow(arrayOf(index, suggestion))
         }
+
+        // SearchViewのAdapterに更新したCursorをセット
         searchAdapter.changeCursor(cursor)
     }
 
+
+
     //ユーザーの入力に基づいてポケモンを検索し、結果をRecyclerViewに表示します。
-    private fun startSearch(text: String) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            val result = withContext(Dispatchers.Default) {
-                Common.pokemonList.filter { it.name?.lowercase()?.contains(text.lowercase()) == true }
+    private fun startSearch(query: String) {
+        val filteredList = mutableListOf<Pokemon>()
+
+        for (pokemon in Common.pokemonList) {
+            val japaneseName = Common.getPokemonNameInJapanese(requireContext(), pokemon.name ?: "")
+
+
+            if (pokemon.name?.contains(query, ignoreCase = true) == true || japaneseName?.contains(query, ignoreCase = true) == true) {
+                filteredList.add(pokemon)
             }
-            adapter.updateList(result)
+
         }
+
+        updateRecyclerView(filteredList)
     }
 
     //検索をリセットして、全てのポケモンを表示します。
@@ -160,21 +177,37 @@ class PokemonList : Fragment() {
                 }
                 Common.pokemonList = pokemonDex.pokemon ?: emptyList()
 
-                // フラグメントがアクティブであることを確認
                 if (isAdded && view != null) {
                     adapter = PokemonListAdapter(requireActivity(), Common.pokemonList)
                     pokemonRecyclerView.adapter = adapter
 
                     lastSuggest.clear()
-                    lastSuggest.addAll(Common.pokemonList.mapNotNull { it.name })
+                    Common.pokemonList.forEach { pokemon ->
+                        val japaneseName = Common.getPokemonNameInJapanese(requireContext(), pokemon.name ?: "")
+
+                        if (japaneseName != null) {
+                            lastSuggest.add(japaneseName)
+                        }
+                    }
                     searchBar.visibility = View.VISIBLE
                 }
             } catch (e: Exception) {
-                // フラグメントがアクティブであることを確認
                 if (isAdded && view != null) {
                     Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
+        }
+    }
+
+
+    private fun updateRecyclerView(filteredList: List<Pokemon>) {
+        // Adapterが存在するか確認し、フィルタリングされたリストで更新します
+        if (::adapter.isInitialized) {
+            adapter.updateList(filteredList)
+        } else {
+            // アダプタが未初期化の場合は新規に作成して設定
+            adapter = PokemonListAdapter(requireContext(), filteredList)
+            pokemonRecyclerView.adapter = adapter
         }
     }
 

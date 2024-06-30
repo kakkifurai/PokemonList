@@ -13,6 +13,10 @@ import com.example.showpokemonlist.Common.Common
 import com.example.showpokemonlist.Model.Evolution
 import com.google.android.material.chip.Chip
 
+//このクラスは、ポケモンの進化のリストを表示するために使用されます。
+
+//RecyclerView.Adapter を継承 。MyViewHolder を指定。
+//context はアプリケーションの状態やリソースにアクセスするために使用され、evolutionList は進化情報のリストです。
 class PokemonEvolutionAdapter(
     private val context: Context,
     private val evolutionList: List<Evolution>
