@@ -1,11 +1,6 @@
 package com.example.showpokemonlist
 
-import com.example.showpokemonlist.Adapter.PokemonListAdapter
 import android.database.MatrixCursor
-import com.example.showpokemonlist.Common.Common
-import com.example.showpokemonlist.Common.ItemOffsetDecoration
-import com.example.showpokemonlist.Retrofit.IPokemonList
-import com.example.showpokemonlist.Retrofit.RetrofitClient
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -19,7 +14,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
+import com.example.showpokemonlist.Adapter.PokemonListAdapter
+import com.example.showpokemonlist.Common.Common
 import com.example.showpokemonlist.Model.Pokemon
+import com.example.showpokemonlist.Retrofit.IPokemonList
+import com.example.showpokemonlist.Retrofit.RetrofitClient
 import kotlinx.coroutines.*
 
 class PokemonList : Fragment() {
@@ -64,9 +63,6 @@ class PokemonList : Fragment() {
         pokemonRecyclerView.setHasFixedSize(true)
         pokemonRecyclerView.layoutManager = GridLayoutManager(context, 2)
 
-        //アイテム間のスペースを設定するために、ItemOffsetDecorationを追加します。
-        val itemDecoration = ItemOffsetDecoration(requireContext(), R.dimen.spacing)
-        pokemonRecyclerView.addItemDecoration(itemDecoration)
 
         //ポケモンデータを取得するためのメソッドを呼び出します。
         fetchData()

@@ -1,9 +1,7 @@
 package com.example.showpokemonlist
 
-import com.example.showpokemonlist.Adapter.PokemonListAdapter
 import android.database.MatrixCursor
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,12 +9,13 @@ import android.widget.Toast
 import androidx.appcompat.widget.SearchView
 import androidx.cursoradapter.widget.CursorAdapter
 import androidx.cursoradapter.widget.SimpleCursorAdapter
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
+import com.example.showpokemonlist.Adapter.PokemonListAdapter
 import com.example.showpokemonlist.Common.Common
-import com.example.showpokemonlist.Common.ItemOffsetDecoration
 import com.example.showpokemonlist.Model.Pokemon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -68,8 +67,6 @@ class PokemonType : Fragment() {
         pokemonRecyclerView = view.findViewById(R.id.pokemon_recyclerview)
         pokemonRecyclerView.setHasFixedSize(true)
         pokemonRecyclerView.layoutManager = GridLayoutManager(context, 2)
-        val itemDecoration = ItemOffsetDecoration(requireContext(), R.dimen.spacing)
-        pokemonRecyclerView.addItemDecoration(itemDecoration)
     }
 
     private fun setupSearchBar(view: View) {
