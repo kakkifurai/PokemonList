@@ -13,36 +13,32 @@ import com.example.showpokemonlist.Common.Common
 import com.example.showpokemonlist.Model.Evolution
 import com.google.android.material.chip.Chip
 
-//このクラスは、ポケモンの進化のリストを表示するために使用されます。
-
-//RecyclerView.Adapter を継承 。MyViewHolder を指定。
+//こRecyclerViewを使ってポケモンの進化のリストを表示するために使用されます。
 class PokemonEvolutionAdapter(
     private val context: Context,//context はアプリケーションの状態やリソースにアクセスするために使用
     private val evolutionList: List<Evolution>//進化情報のリスト
+
 ) : RecyclerView.Adapter<PokemonEvolutionAdapter.MyViewHolder>() {
 
     //RecyclerView の各アイテムビューの保持と管理
     inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private var chip: Chip = itemView.findViewById(R.id.chip)//chip_itemxmlからテンプレートを取得
-
+        private var chip: Chip = itemView.findViewById(R.id.chip) //chip_item.xmlからテンプレートを取得
+        private val localBroadcastManager = LocalBroadcastManager.getInstance(context)
         //クリックした時の処理を記入
         init {
             chip.setOnClickListener {
                 // LocalBroadcastManagerのインスタンスを取得
-                val localBroadcastManager = LocalBroadcastManager.getInstance(context)
-
+                if (adapterPosition != RecyclerView.NO_POSITION && adapterPosition < evolutionList.size) {
                 // Intentを作成して、ブロードキャスト用のActionを設定
                 val intent = Intent(Common.KEY_NUM_EVOLUTION).apply {
                     // "num" をキーにして、選択された進化の "num" を追加
                     putExtra("num", evolutionList[adapterPosition].num)
                 }
-
                 // ブロードキャストを送信
                 localBroadcastManager.sendBroadcast(intent)
+                    }
             }
         }
-
-
         fun bind(evolution: Evolution) {
             // ポケモンの名前を日本語に変換して設定
             val japaneseName = evolution.name?.let { Common.getPokemonNameInJapanese(context, it) } ?: "不明なポケモン"
@@ -56,8 +52,6 @@ class PokemonEvolutionAdapter(
             val color = Common.getColorByType(pokemonType)
             chip.chipBackgroundColor = ColorStateList.valueOf(color)
         }
-
-
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {

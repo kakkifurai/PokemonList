@@ -13,17 +13,23 @@ import com.example.showpokemonlist.Common.Common
 import com.google.android.material.chip.Chip
 import java.util.Locale
 
-class PokemonTypeAdapter(private val context: Context, private val typeList: List<String>) :
+//RecyclerViewを使ってポケモンのタイプを表示するために使用される
+class PokemonTypeAdapter(
+    private val context: Context,
+    private val typeList: List<String>) : //ポケモンのタイプリストを保持
     RecyclerView.Adapter<PokemonTypeAdapter.MyViewHolder>() {
 
     inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var chip: Chip = itemView.findViewById(R.id.chip)
-
+        var chip: Chip = itemView.findViewById(R.id.chip) //chip_item.xmlからテンプレートを取得
+        val localBroadcastManager = LocalBroadcastManager.getInstance(context)
+        //タイプがタップされたときの処理を記入
         init {
             chip.setOnClickListener {
-                if (adapterPosition != RecyclerView.NO_POSITION && adapterPosition < typeList.size) {
-                    LocalBroadcastManager.getInstance(context)
-                        .sendBroadcast(Intent(Common.KEY_POKEMON_TYPE).putExtra("type", typeList[adapterPosition]))
+                if (adapterPosition != RecyclerView.NO_POSITION && adapterPosition < typeList.size) {  //クリックされたアイテムが実際にリスト内に存在すること.そのアイテムの位置が、リストの範囲内にあることを確認。例えば、ユーザーが素早くスクロールしたり、リストが更新されている最中にクリックしたりした場合でも、アプリが正しく動作することを保証
+                    val intent = Intent(Common.KEY_POKEMON_TYPE).apply {
+                        putExtra("type", typeList[adapterPosition])  //KEY_POKEMON_TYPEというアクションを持つインテントを作成し、クリックされたタイプを"type"としてインテントに追加してブロードキャストを送信します。
+                    }
+                    localBroadcastManager.sendBroadcast(intent)
                 }
             }
         }
@@ -38,39 +44,15 @@ class PokemonTypeAdapter(private val context: Context, private val typeList: Lis
         val type = typeList[position] ?: "default"
 
         // タイプ名を日本語に変換してセット
-        holder.chip.text = getLocalizedTypeName(type)
+        holder.chip.text = Common.getLocalizedTypeName(context,type)
 
         // 色を直接取得して設定
         val color = Common.getColorByType(type)
         holder.chip.chipBackgroundColor = ColorStateList.valueOf(color)
     }
 
-
-
     override fun getItemCount(): Int {
         return typeList.size
     }
 
-    // タイプ名を日本語に変換する関数
-
-    fun getLocalizedTypeName(type: String): String {
-        return when (type.toLowerCase(Locale.getDefault())) {
-            "normal" -> context.getString(R.string.Normal)
-            "fire" -> context.getString(R.string.Fire)
-            "water" -> context.getString(R.string.Water)
-            "electric" -> context.getString(R.string.Electric)
-            "grass" -> context.getString(R.string.Grass)
-            "ice" -> context.getString(R.string.Ice)
-            "fighting" -> context.getString(R.string.Fighting)
-            "poison" -> context.getString(R.string.Poison)
-            "ground" -> context.getString(R.string.Ground)
-            "flying" -> context.getString(R.string.Flying)
-            "psychic" -> context.getString(R.string.Psychic)
-            "bug" -> context.getString(R.string.Bug)
-            "rock" -> context.getString(R.string.Rock)
-            "ghost" -> context.getString(R.string.Ghost)
-            "dragon" -> context.getString(R.string.Dragon)
-            else -> type // もし他のタイプがあればそのまま返す
-        }
-    }
 }
