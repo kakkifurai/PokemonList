@@ -48,8 +48,11 @@ class PokemonType : Fragment() {
     ): View? {
         val itemView = inflater.inflate(R.layout.fragment_pokemon_type, container, false)
         val type = arguments?.getString(ARG_TYPE)
+
+        // type を日本語に変換
         type?.let {
-            (activity as? MainActivity)?.updateToolbar("TYPE: ${it.uppercase()}", true)
+            val japaneseType = Common.getPokemonTypeInJapanese(requireContext(), it)
+            (activity as? MainActivity)?.updateToolbar(getString(R.string.type_prefix) + japaneseType, true)
         }
 
         setupRecyclerView(itemView)
@@ -59,6 +62,7 @@ class PokemonType : Fragment() {
 
         return itemView
     }
+
 
     private fun setupRecyclerView(view: View) {
         pokemonRecyclerView = view.findViewById(R.id.pokemon_recyclerview)
@@ -70,7 +74,7 @@ class PokemonType : Fragment() {
 
     private fun setupSearchBar(view: View) {
         searchBar = view.findViewById(R.id.search_bar)
-        searchBar.queryHint = getString(R.string.enter_pokemon_name)
+        searchBar.queryHint = getString(R.string.search_hint)
         searchBar.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 query?.let { startSearch(it) }

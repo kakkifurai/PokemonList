@@ -18,4 +18,5 @@ class Pokemon {
     var weaknesses:List<String>?=null
     var next_evolution:List<Evolution>?=null
     var prev_evolution:List<Evolution>?=null
+    var japaneseName: String? = null
 }

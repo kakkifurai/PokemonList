@@ -20,8 +20,8 @@
             android:id="@+id/search_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:queryHint="Enter Pokemon Name"
-            android:iconifiedByDefault="false"/>
+            android:queryHint="@string/search_hint" />
+
     </androidx.cardview.widget.CardView>
 
     <androidx.recyclerview.widget.RecyclerView

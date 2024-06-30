@@ -1,6 +1,7 @@
 package com.example.showpokemonlist.Common
 
 
+import android.content.Context
 import android.graphics.Color
 import com.example.showpokemonlist.Model.Pokemon
 
@@ -37,10 +38,28 @@ object Common {
             else -> Color.parseColor("#658FA0") // デフォルトの色
         }
     }
-
     fun findPokemonByType(type: String): List<Pokemon> {
         return pokemonList.filter { pokemon ->
             pokemon.type?.contains(type) == true
+        }
+    }
+
+    fun getPokemonNameInJapanese(context: Context, englishName: String): String {
+        val resources = context.resources
+        val resourceId = resources.getIdentifier(englishName, "string", context.packageName)
+        return if (resourceId != 0) {
+            resources.getString(resourceId)
+        } else {
+            englishName // 日本語名が見つからない場合は英語名を返す
+        }
+    }
+
+    fun getPokemonTypeInJapanese(context: Context, type: String): String {
+        val resourceId = context.resources.getIdentifier(type, "string", context.packageName)
+        return if (resourceId != 0) {
+            context.getString(resourceId)
+        } else {
+            "未知のタイプ"
         }
     }
 

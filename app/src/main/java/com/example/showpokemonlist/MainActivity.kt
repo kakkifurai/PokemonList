@@ -45,6 +45,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupToolbar() {
         toolbar = findViewById(R.id.toolbar)
+        toolbar.title = getString(R.string.pokemon_list)
         setSupportActionBar(toolbar)
     }
 
@@ -80,17 +81,22 @@ class MainActivity : AppCompatActivity() {
     private fun handlePokemonType(intent: Intent) {
         val type = intent.getStringExtra("type")
         if (!type.isNullOrEmpty()) {
-            showFragment(PokemonType.newInstance(type), "TYPE: ${type.uppercase()}")
+            val japaneseType = Common.getPokemonTypeInJapanese(this, type)  // Context を this として渡す
+            showFragment(PokemonType.newInstance(type), "TYPE: ${japaneseType.uppercase()}")
         } else {
             showError("Invalid pokemon type")
         }
     }
 
+
     private fun handlePokemonDetail(intent: Intent) {
         val num = intent.getStringExtra("num")
         if (!num.isNullOrEmpty()) {
             val pokemon = Common.findPokemonByNum(num)
-            showFragment(PokemonDetail.newInstance(num), pokemon?.name ?: "Pokemon Detail")
+            pokemon?.let {
+                showFragment(PokemonDetail.newInstance(num), it.name ?: "Pokemon Detail")
+                updateToolbar(Common.getPokemonNameInJapanese(this, it.name ?: ""), true)
+            }
         } else {
             showError("Invalid pokemon number")
         }
@@ -109,7 +115,7 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.list_pokemon_fragment, PokemonList.newInstance())
             .commit()
-        updateToolbar("POKEMON LIST", false)
+        updateToolbar(getString(R.string.pokemon_list), false)
     }
 
     private fun showPokemonListFragment() {
@@ -119,7 +125,7 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.list_pokemon_fragment, fragment)
             .commit()
-        updateToolbar("POKEMON LIST", false)
+        updateToolbar(getString(R.string.pokemon_list), false)
     }
 
     fun updateToolbar(title: String, showBackButton: Boolean) {

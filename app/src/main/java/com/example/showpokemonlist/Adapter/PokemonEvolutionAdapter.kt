@@ -39,7 +39,9 @@ class PokemonEvolutionAdapter(
 
 
         fun bind(evolution: Evolution) {
-            chip.text = evolution.name
+            // ポケモンの名前を日本語に変換して設定
+            val japaneseName = evolution.name?.let { Common.getPokemonNameInJapanese(context, it) } ?: "不明なポケモン"
+            chip.text = japaneseName
 
             val pokemon = Common.findPokemonByNum(evolution.num)
             val pokemonType = pokemon?.type?.getOrNull(0)

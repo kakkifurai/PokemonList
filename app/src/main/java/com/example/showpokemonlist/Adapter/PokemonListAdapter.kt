@@ -32,7 +32,9 @@ class PokemonListAdapter(
         private val txtPokemon: TextView = itemView.findViewById(R.id.pokemon_name)
 
         fun bind(pokemon: Pokemon) {
-            txtPokemon.text = pokemon.name
+            // Display Japanese name if available, otherwise fallback to English name
+            val pokemonName = Common.getPokemonNameInJapanese(context, pokemon.name ?: "")
+            txtPokemon.text = pokemonName
 
             Glide.with(context)
                 .load(pokemon.img)

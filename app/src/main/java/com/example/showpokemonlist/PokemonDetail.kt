@@ -16,6 +16,7 @@ import com.example.myapplication.R
 import com.example.showpokemonlist.Adapter.PokemonEvolutionAdapter
 import com.example.showpokemonlist.Adapter.PokemonTypeAdapter
 import com.example.showpokemonlist.Common.Common
+import com.example.showpokemonlist.Model.Evolution
 import com.example.showpokemonlist.Model.Pokemon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -105,10 +106,11 @@ class PokemonDetail : Fragment() {
         // Glideで画像を読み込む
         Glide.with(this).load(pokemon.img).into(pokemon_img)
 
-        // テキストを設定
-        pokemon_name.text = pokemon.name
-        pokemon_height.text = "Height: ${pokemon.height}"
-        pokemon_weight.text = "Weight: ${pokemon.weight}"
+        // 日本語名を取得して設定
+        val pokemonJapaneseName = pokemon.name?.let { Common.getPokemonNameInJapanese(requireContext(), it) } ?: "不明なポケモン"
+        pokemon_name.text = pokemonJapaneseName
+        pokemon_height.text = "高さ: ${pokemon.height}"
+        pokemon_weight.text = "重さ: ${pokemon.weight}"
 
         val typeAdapter = PokemonTypeAdapter(requireActivity(), pokemon.type ?: emptyList())
         recycler_type.adapter = typeAdapter
@@ -116,10 +118,28 @@ class PokemonDetail : Fragment() {
         val weaknessAdapter = PokemonTypeAdapter(requireActivity(), pokemon.weaknesses ?: emptyList())
         recycler_weakness.adapter = weaknessAdapter
 
-        val prevEvolutionAdapter = PokemonEvolutionAdapter(requireActivity(), pokemon.prev_evolution ?: emptyList())
+        // 進化前のポケモン名を日本語に変換してリストに格納
+        val prevEvolutionList = pokemon.prev_evolution?.map { evolution ->
+            val japaneseName = evolution.name?.let { Common.getPokemonNameInJapanese(requireContext(), it) } ?: ""
+            Evolution(
+                num = evolution.num ?: "",
+                name = japaneseName
+            )
+        } ?: emptyList()
+
+        // 進化後のポケモン名を日本語に変換してリストに格納
+        val nextEvolutionList = pokemon.next_evolution?.map { evolution ->
+            Evolution(
+                num = evolution.num,
+                name = Common.getPokemonNameInJapanese(requireContext(), evolution.name)
+            )
+        } ?: emptyList()
+
+        val prevEvolutionAdapter = PokemonEvolutionAdapter(requireActivity(), prevEvolutionList)
         recycler_prev_evolution.adapter = prevEvolutionAdapter
 
-        val nextEvolutionAdapter = PokemonEvolutionAdapter(requireActivity(), pokemon.next_evolution ?: emptyList())
+        val nextEvolutionAdapter = PokemonEvolutionAdapter(requireActivity(), nextEvolutionList)
         recycler_next_evolution.adapter = nextEvolutionAdapter
     }
+
 }

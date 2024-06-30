@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
 import com.example.showpokemonlist.Common.Common
 import com.google.android.material.chip.Chip
+import java.util.Locale
 
 class PokemonTypeAdapter(private val context: Context, private val typeList: List<String>) :
     RecyclerView.Adapter<PokemonTypeAdapter.MyViewHolder>() {
@@ -35,7 +36,9 @@ class PokemonTypeAdapter(private val context: Context, private val typeList: Lis
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
         val type = typeList[position]
-        holder.chip.text = type
+
+        // タイプ名を日本語に変換してセット
+        holder.chip.text = getLocalizedTypeName(type)
 
         try {
             // 色を直接取得して設定
@@ -50,5 +53,28 @@ class PokemonTypeAdapter(private val context: Context, private val typeList: Lis
 
     override fun getItemCount(): Int {
         return typeList.size
+    }
+
+    // タイプ名を日本語に変換する関数
+
+    fun getLocalizedTypeName(type: String): String {
+        return when (type.toLowerCase(Locale.getDefault())) {
+            "normal" -> context.getString(R.string.Normal)
+            "fire" -> context.getString(R.string.Fire)
+            "water" -> context.getString(R.string.Water)
+            "electric" -> context.getString(R.string.Electric)
+            "grass" -> context.getString(R.string.Grass)
+            "ice" -> context.getString(R.string.Ice)
+            "fighting" -> context.getString(R.string.Fighting)
+            "poison" -> context.getString(R.string.Poison)
+            "ground" -> context.getString(R.string.Ground)
+            "flying" -> context.getString(R.string.Flying)
+            "psychic" -> context.getString(R.string.Psychic)
+            "bug" -> context.getString(R.string.Bug)
+            "rock" -> context.getString(R.string.Rock)
+            "ghost" -> context.getString(R.string.Ghost)
+            "dragon" -> context.getString(R.string.Dragon)
+            else -> type // もし他のタイプがあればそのまま返す
+        }
     }
 }
